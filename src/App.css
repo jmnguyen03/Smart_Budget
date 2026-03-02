@@ -1,38 +1,552 @@
-.App {
+/* =========================================
+   1. GLOBAL RESET & BASE STYLES
+   ========================================= */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  background-color: #f1f5f9; /* Light grey background */
+  color: #1e293b; /* Dark slate text */
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* =========================================
+   2. AUTH PAGES (Login & Signup)
+   ========================================= */
+/* Layout: Centers the card vertically and horizontally */
+.center-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* The Card Box */
+.auth-card {
+  background: white;
+  width: 100%;
+  max-width: 400px; /* Limits width */
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  border: 1px solid #e2e8f0;
+}
+
+.auth-card h2 {
+  margin-top: 0;
+  margin-bottom: 0.5rem;
+  color: #1e293b;
+}
+
+.subtitle {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin-bottom: 2rem;
+}
+
+/* Switch Auth Link (Bottom text) */
+.switch-auth {
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.switch-auth a {
+  color: #3b82f6; /* Blue */
+  font-weight: 600;
+}
+
+.switch-auth a:hover {
+  text-decoration: underline;
+}
+
+/* =========================================
+   3. FORMS & INPUTS
+   ========================================= */
+.form-group {
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #334155;
+}
+
+.form-group input,
+.form-group select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.error-message {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  text-align: left;
+  border: 1px solid #fecaca;
+}
+
+/* =========================================
+   4. BUTTONS
+   ========================================= */
+button {
+  cursor: pointer;
+  font-family: inherit;
+  transition: filter 0.2s;
+}
+
+.primary-btn {
+  width: 100%;
+  background-color: #3b82f6; /* Blue brand color */
+  color: white;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.primary-btn:hover {
+  background-color: #2563eb;
+}
+
+.primary-btn:disabled {
+  background-color: #94a3b8;
+  cursor: not-allowed;
+}
+
+/* Logout Button Link */
+.logout-btn {
+  background: white;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  color: #334155;
+  padding: 6px 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.logout-btn:hover {
+  background: #f1f5f9;
+}
+
+/* =========================================
+   5. DASHBOARD LAYOUT (Split View)
+   ========================================= */
+.dashboard-layout {
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Full screen height */
+  overflow: hidden; /* Prevent body scroll */
+}
+
+/* Header Strip */
+.main-header {
+  background: #1e293b; /* Dark Navy */
+  color: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0; /* Don't shrink header */
+}
+
+.header-brand h1 { margin: 0; font-size: 1.5rem; }
+.header-brand .subtitle { color: #94a3b8; margin: 0; font-size: 0.85rem; }
+
+/* Control Bar (Totals & Add Button) */
+.control-bar {
+  background: white;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.total-display { font-size: 1.5rem; font-weight: 700; color: #334155; }
+.amount-highlight { color: #ef4444; margin-left: 8px; }
+
+.action-buttons button {
+  background-color: #ef4444; /* Red accent */
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 1rem;
+}
+.action-buttons button:hover { background-color: #dc2626; }
+
+/* Main Split Content Area */
+.content-split {
+  display: flex;
+  flex: 1; /* Take remaining height */
+  padding: 20px;
+  gap: 20px;
+  max-width: 1600px;
+  margin: 0 auto;
+  width: 100%;
+  overflow: hidden; /* Individual panes scroll, not the page */
+}
+
+/* LEFT PANE: Visuals */
+.visuals-pane {
+  flex: 2; /* 66% width */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto; /* Scrollable if charts are tall */
+  padding-right: 5px;
+}
+
+/* RIGHT PANE: Expense List */
+.list-pane {
+  flex: 1; /* 33% width */
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+}
+
+.list-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #f8fafc;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.list-header h3 { margin: 0; font-size: 1.1rem; color: #334155; }
+.badge-count { font-size: 0.8rem; background: #e2e8f0; padding: 4px 8px; border-radius: 12px; color: #475569; }
+
+/* The scrolling area inside the list pane */
+.scrollable-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+/* =========================================
+   6. COMPONENT STYLES (Fixed Charts)
+   ========================================= */
+
+/* New Side-by-Side Row */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Two equal columns */
+  gap: 20px;
+  /* Allow the row to shrink/grow but never smaller than 320px */
+  min-height: 320px; 
+}
+
+/* Chart Cards - Flexible but won't squish */
+.chart-card {
+  background: white;
+  border-radius: 12px;
+  padding: 15px; 
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border: 1px solid #e2e8f0;
+  
+  display: flex;
+  flex-direction: column;
+  
+  /* Use min-height instead of height. This tells the browser: 
+     "If space is tight, trigger a scrollbar instead of squishing me." */
+  min-height: 320px; 
+  height: auto;
+  overflow: hidden;
+}
+
+.chart-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+.chart-container h3 {
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+  color: #334155;
+  text-align: center;
+  font-weight: 600;
+  flex-shrink: 0; 
+}
+
+/* The div that Chart.js draws inside */
+.canvas-wrapper {
+  position: relative;
+  width: 100%;
+  flex-grow: 1; 
+  min-height: 0; 
+}
+
+/* Make sure they stack vertically on small screens so they don't get too narrow */
+@media (max-width: 1100px) {
+  .charts-row {
+    grid-template-columns: 1fr; /* 1 column layout on smaller screens */
+  }
+}
+
+/* Expense Items */
+.expense-item {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid #ef4444; /* Red accent border */
+  border-radius: 6px;
+  padding: 15px;
+  margin-bottom: 15px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.expense-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.expense-info h4 { margin: 0 0 5px 0; font-size: 1rem; color: #1e293b; }
+.meta-data { font-size: 0.85rem; color: #64748b; display: flex; gap: 10px; }
+
+.expense-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.amount { font-weight: 700; font-size: 1.1rem; color: #1e293b; }
+
+.delete-btn {
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  color: #94a3b8;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+.delete-btn:hover { color: #ef4444; border-color: #ef4444; }
+
+/* =========================================
+   7. MODAL STYLES
+   ========================================= */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  animation: slideUp 0.3s ease-out;
+}
+
+.modal-content h2 { margin-top: 0; margin-bottom: 1.5rem; }
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.secondary-btn {
+  background-color: #e2e8f0;
+  color: #334155;
+  padding: 12px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  flex: 1;
+  cursor: pointer;
+}
+.secondary-btn:hover { background-color: #cbd5e1; }
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* =========================================
+   8. RESPONSIVE DESIGN
+   ========================================= */
+@media (max-width: 900px) {
+  .content-split {
+    flex-direction: column;
+    height: auto;
+    overflow: visible;
+  }
+
+  .visuals-pane, .list-pane {
+    flex: none;
+    width: 100%;
+    overflow: visible;
+  }
+  
+  .scrollable-content {
+    max-height: 400px; /* Force scroll on mobile list */
+  }
+  
+  .chart-card {
+    height: 300px; /* Slightly smaller charts on mobile */
+  }
+}
+
+/* =========================================
+   9. PREDICTION WIDGET (Week 7)
+   ========================================= */
+.prediction-widget {
+  background: linear-gradient(to bottom right, #ffffff, #f8fafc);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  border-top: 4px solid #8b5cf6; /* Purple AI accent */
+  margin-bottom: 5px;
+}
+
+.widget-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.widget-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.ai-icon {
+  font-size: 1.2rem;
+}
+
+.widget-stats {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.stat-box {
+  flex: 1;
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.stat-label {
+  margin: 0 0 5px 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
+.stat-value {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #334155;
+}
+
+.warning-box {
+  background: #fdf4ff; /* Very faint purple background */
+  border-color: #f0abfc;
+}
+
+.projected-value {
+  color: #9333ea; /* Deep purple */
+}
+
+.widget-footer {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 10px;
+}
+
+/* Responsive constraints for the widget */
+@media (max-width: 768px) {
+  .widget-stats {
+    flex-direction: column;
   }
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.action-icons {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  gap: 10px;
 }
 
-.App-link {
-  color: #61dafb;
+.edit-btn {
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  color: #64748b;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.edit-btn:hover {
+  color: #3b82f6;
+  border-color: #3b82f6;
 }
