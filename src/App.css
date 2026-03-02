@@ -435,7 +435,9 @@ button {
   }
   
   .scrollable-content {
-    max-height: 400px; /* Force scroll on mobile list */
+    max-height: 400px; /* Force limit on mobile list */
+    overflow-y: auto; /* Creates the internal scrollbar */
+    padding-right: 5px; 
   }
   
   .chart-card {
