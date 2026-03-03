@@ -205,26 +205,29 @@
 
           {/* RIGHT: List */}
           <div className="list-pane">
-            <ExpenseList 
-              expenses={displayedExpenses} 
-              onDelete={handleDeleteExpense} 
-              onEdit={(expense) => {
-                setEditingExpense(expense);
-                setIsModalOpen(true);
-              }} 
-            />
+              
+              {/* 1. Header goes at the very top! */}
               <div className="list-header">
                   <h3>Transaction List</h3>
                   <span className="badge-count">{displayedExpenses.length} items</span>
               </div>
               
+              {/* 2. The scroll box holds the ONE AND ONLY list */}
               <div className="scrollable-content">
                   {loading ? (
                       <p style={{textAlign:'center', marginTop: '20px'}}>Loading...</p>
                   ) : (
-                      <ExpenseList expenses={displayedExpenses} onDelete={handleDeleteExpense} />
+                      <ExpenseList 
+                        expenses={displayedExpenses} 
+                        onDelete={handleDeleteExpense} 
+                        onEdit={(expense) => {
+                          setEditingExpense(expense);
+                          setIsModalOpen(true);
+                        }} 
+                      />
                   )}
               </div>
+
           </div>
         </div>
 

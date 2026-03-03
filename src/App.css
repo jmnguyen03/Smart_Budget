@@ -216,13 +216,13 @@ button {
 /* Main Split Content Area */
 .content-split {
   display: flex;
-  flex: 1; /* Take remaining height */
+  flex: 1; 
   padding: 20px;
   gap: 20px;
   max-width: 1600px;
   margin: 0 auto;
   width: 100%;
-  overflow: hidden; /* Individual panes scroll, not the page */
+  overflow: hidden; 
 }
 
 /* LEFT PANE: Visuals */
@@ -262,40 +262,44 @@ button {
 
 /* The scrolling area inside the list pane */
 .scrollable-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
+  flex: 1; /* Forces the scroll box to fill the exact remaining space under the header */
+  min-height: 0; /* THE MAGIC TRICK: Prevents the list from stretching the box */
+  overflow-y: auto; /* Creates the scrollbar! */
+  padding-right: 15px; 
 }
 
 /* =========================================
    6. COMPONENT STYLES (Fixed Charts)
    ========================================= */
 
-/* New Side-by-Side Row */
+/* 1. The Container Row */
 .charts-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr; /* Two equal columns */
+  display: flex;
   gap: 20px;
-  /* Allow the row to shrink/grow but never smaller than 320px */
-  min-height: 320px; 
+  flex: 1; /* Tells the row to fill the remaining space under the Prediction widget */
+  min-height: 0; /* CRITICAL: Stops the charts from infinitely expanding downward */
+  align-items: stretch; /* Forces both child cards to stretch to the exact same height */
 }
 
-/* Chart Cards - Flexible but won't squish */
+/* 2. The Individual Chart Cards */
 .chart-card {
+  flex: 1; /* Makes both cards exactly 50% width */
   background: white;
   border-radius: 12px;
-  padding: 15px; 
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   border: 1px solid #e2e8f0;
-  
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
   display: flex;
   flex-direction: column;
-  
-  /* Use min-height instead of height. This tells the browser: 
-     "If space is tight, trigger a scrollbar instead of squishing me." */
-  min-height: 320px; 
-  height: auto;
-  overflow: hidden;
+  padding: 20px;
+  overflow: hidden; /* Prevents the chart canvas from bleeding out of the box */
+}
+
+/* 3. The Chart Library Overrider */
+/* Charting libraries inject their own <div>. This forces them to obey the flexbox height. */
+.chart-card > div {
+  flex: 1;
+  min-height: 0;
+  height: 100% !important; 
 }
 
 .chart-container {
@@ -421,6 +425,7 @@ button {
 /* =========================================
    8. RESPONSIVE DESIGN
    ========================================= */
+
 @media (max-width: 900px) {
   .content-split {
     flex-direction: column;
