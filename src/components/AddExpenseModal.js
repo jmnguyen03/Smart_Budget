@@ -1,94 +1,140 @@
 import { useState, useEffect } from 'react';
 
-const getLocalYYYYMMDD = () => {
-  const date = new Date();
-  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
-  return date.toISOString().split('T')[0];
-};
-
-const getInitialState = () => ({
-  description: '',
-  amount: '',
-  category: 'Food & Dining',
-  date: getLocalYYYYMMDD()
-});
-
-// Added 'expenseToEdit' prop
 export default function AddExpenseModal({ isOpen, onClose, onSave, expenseToEdit }) {
-  const [formData, setFormData] = useState(getInitialState());
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState('Food & Dining');
+  const [date, setDate] = useState('');
+  const [description, setDescription] = useState('');
+  // 1. ADD THE NEW STATE FOR OUR CHECKBOX (Default it to true)
+  const [isRecurring, setIsRecurring] = useState(true);
 
-  // Watch for changes: If expenseToEdit is passed in, pre-fill the form!
+  // Categories list for dropdown
+const categories = [
+    'Entertainment', 
+    'Food & Dining', 
+    'Groceries', 
+    'Income', 
+    'Rent', 
+    'Shopping', 
+    'Textbooks', 
+    'Transportation', 
+    'Utilities'
+  ];
+  // Populate the form if we are editing an existing expense
   useEffect(() => {
     if (expenseToEdit) {
-      setFormData({
-        description: expenseToEdit.description,
-        amount: Math.abs(Number(expenseToEdit.amount)), // Strip negative sign for the input field
-        category: expenseToEdit.category,
-        date: expenseToEdit.date
-      });
+      setAmount(Math.abs(expenseToEdit.amount));
+      setCategory(expenseToEdit.category);
+      setDate(expenseToEdit.date);
+      setDescription(expenseToEdit.description || '');
+      // If editing, load the saved recurring status (default to true if undefined)
+      setIsRecurring(expenseToEdit.is_recurring !== false);
     } else {
-      setFormData(getInitialState());
+      resetForm();
     }
   }, [expenseToEdit, isOpen]);
 
+  const resetForm = () => {
+    setAmount('');
+    setCategory('Food & Dining'); // Reset to default category
+    
+    // Get local date properly formatted as YYYY-MM-DD
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    setDate(`${year}-${month}-${day}`);
+    
+    setDescription('');
+    setIsRecurring(true); 
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    
+    // 2. INCLUDE THE RECURRING FLAG IN THE DATA WE SEND TO SUPABASE
+    const expenseData = {
+      //id: expenseToEdit ? expenseToEdit.id : undefined,
+      amount: parseFloat(amount),
+      category,
+      date,
+      description,
+      is_recurring: isRecurring 
+    };
+
+    onSave(expenseData);
+    resetForm();
+  };
+
   if (!isOpen) return null;
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    await onSave(formData);
-    onClose(); // Reset is handled by the useEffect when it closes
-  };
-
-  const handleCancel = () => {
-    onClose();
-  };
-
   return (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        {/* Dynamic Title */}
-        <h2>{expenseToEdit ? 'Edit Transaction' : 'Add Transaction'}</h2>
-        <form onSubmit={handleSubmit}>
+    <div className="modal-overlay" style={overlayStyle}>
+      <div className="modal-content" style={contentStyle}>
+        <h2>{expenseToEdit ? 'Edit Transaction' : 'Add New Transaction'}</h2>
+        
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           
-          <div className="form-group">
-            <label>Description</label>
-            <input name="description" value={formData.description} onChange={handleChange} required />
+          <div>
+            <label>Amount ($)</label>
+            <input 
+              type="number" 
+              step="0.01" 
+              value={amount} 
+              onChange={(e) => setAmount(e.target.value)} 
+              required 
+              style={inputStyle}
+            />
           </div>
 
-          <div className="form-group">
-            <label>Amount</label>
-            <input name="amount" type="number" step="0.01" value={formData.amount} onChange={handleChange} required />
-          </div>
-
-          <div className="form-group">
+          <div>
             <label>Category</label>
-            <select name="category" value={formData.category} onChange={handleChange}>
-              <option value="Entertainment">Entertainment</option>
-              <option value="Food & Dining">Food & Dining</option>
-              <option value="Groceries">Groceries</option>
-              <option value="Income">Income</option>
-              <option value="Rent">Rent</option>
-              <option value="Shopping">Shopping</option>
-              <option value="Textbooks">Textbooks</option>
-              <option value="Transportation">Transportation</option>
-              <option value="Utilities">Utilities</option>
+            <select value={category} onChange={(e) => setCategory(e.target.value)} style={inputStyle}>
+              {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
             </select>
           </div>
 
-          <div className="form-group">
+          <div>
             <label>Date</label>
-            <input name="date" type="date" value={formData.date} onChange={handleChange} required />
+            <input 
+              type="date" 
+              value={date} 
+              onChange={(e) => setDate(e.target.value)} 
+              required 
+              style={inputStyle}
+            />
           </div>
 
-          <div className="modal-actions">
-            <button type="button" className="secondary-btn" onClick={handleCancel}>Cancel</button>
-            <button type="submit" className="primary-btn">
-              {expenseToEdit ? 'Update Changes' : 'Save Transaction'}
-            </button>
+          <div>
+            <label>Description (Optional)</label>
+            <input 
+              type="text" 
+              value={description} 
+              onChange={(e) => setDescription(e.target.value)} 
+              style={inputStyle}
+            />
+          </div>
+
+          {/* 3. ADD THE CHECKBOX UI */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '5px' }}>
+            <input 
+              type="checkbox" 
+              id="recurring-checkbox"
+              checked={isRecurring} 
+              onChange={(e) => setIsRecurring(e.target.checked)} 
+              style={{ width: '18px', height: '18px', cursor: 'pointer' }}
+            />
+            <label htmlFor="recurring-checkbox" style={{ cursor: 'pointer', fontSize: '0.95rem', color: '#334155' }}>
+              <strong>Recurring Expense?</strong> <br/>
+              <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 'normal' }}>
+                Uncheck this for one-time spikes (like tuition or a new laptop) to keep your daily forecast accurate.
+              </span>
+            </label>
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px', marginTop: '15px' }}>
+            <button type="submit" style={submitBtnStyle}>Save</button>
+            <button type="button" onClick={onClose} style={cancelBtnStyle}>Cancel</button>
           </div>
 
         </form>
@@ -96,3 +142,21 @@ export default function AddExpenseModal({ isOpen, onClose, onSave, expenseToEdit
     </div>
   );
 }
+
+// Basic inline styles to ensure it looks clean without needing extra CSS classes
+const overlayStyle = {
+  position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+  backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
+};
+const contentStyle = {
+  backgroundColor: 'white', padding: '30px', borderRadius: '12px', width: '100%', maxWidth: '400px', boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+};
+const inputStyle = {
+  width: '100%', padding: '10px', marginTop: '5px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box'
+};
+const submitBtnStyle = {
+  flex: 1, padding: '10px', backgroundColor: '#3b82f6', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold'
+};
+const cancelBtnStyle = {
+  flex: 1, padding: '10px', backgroundColor: '#e2e8f0', color: '#334155', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold'
+};

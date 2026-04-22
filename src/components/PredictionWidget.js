@@ -18,10 +18,13 @@ export default function PredictionWidget({ expenses }) {
     
     setDaysLeft(daysInMonth - currentDay);
 
-    // 1. Isolate Data: Get ALL expenses from this month
+    // 1. Isolate Data: Get ALL expenses from this month AND ignore Income/Positive values
     const thisMonthExpenses = expenses.filter(exp => {
       const [year, month] = exp.date.split('-').map(Number);
-      return (month - 1) === currentMonth && year === currentYear;
+      const isCurrentMonth = (month - 1) === currentMonth && year === currentYear;
+      const isExpense = exp.category !== 'Income' && Number(exp.amount) < 0; // NEW FIX
+      
+      return isCurrentMonth && isExpense;
     });
 
     if (thisMonthExpenses.length === 0) {

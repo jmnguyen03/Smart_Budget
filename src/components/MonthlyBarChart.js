@@ -49,7 +49,13 @@ export default function MonthlyBarChart({ userId, onMonthClick, selectedCategory
       : rawData.filter(item => item.category === selectedCategory);
 
     const grouped = filtered.reduce((acc, curr) => {
-      const dateObj = new Date(curr.date);
+      // 1. Split the raw string (e.g., "2026-03-01" becomes year: 2026, month: 3, day: 1)
+      const [year, month, day] = curr.date.split('-');
+      
+      // 2. Build the Date object locally (JavaScript months are 0-11, so we subtract 1)
+      const dateObj = new Date(year, Number(month) - 1, day);
+      
+      // 3. Now the label will perfectly match the real month!
       const label = dateObj.toLocaleString('default', { month: 'long', year: 'numeric' });
       const sortKey = curr.date.slice(0, 7);
       
