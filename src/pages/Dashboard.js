@@ -9,6 +9,7 @@ import AddExpenseModal from '../components/AddExpenseModal';
 import SpendingPieChart from '../components/SpendingPieChart';
 import MonthlyBarChart from '../components/MonthlyBarChart';
 import PredictionWidget from '../components/PredictionWidget';
+import SetBudgetModal from '../components/SetBudgetModal';
 
 // WEEK 13: Import the ETL Pipeline
 import { generateAIContext } from '../utils/etlPipeline';
@@ -20,6 +21,8 @@ export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [editingExpense, setEditingExpense] = useState(null);
+  const [budgets, setBudgets] = useState([]);
+  const [isBudgetModalOpen, setIsBudgetModalOpen] = useState(false);
 
   // --- FILTER STATES ---
   const [filterMonth, setFilterMonth] = useState(null);
@@ -30,24 +33,33 @@ export default function Dashboard() {
 
   // --- READ DATA ---
   useEffect(() => {
-    const fetchExpenses = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
+        // Fetch Expenses
+        const { data: expData, error: expError } = await supabase
           .from('expenses')
           .select('*')
           .eq('user_id', user.id) 
           .order('date', { ascending: false });
+        if (expError) throw expError;
+        setExpenses(expData);
 
-        if (error) throw error;
-        setExpenses(data);
+        // Fetch Budgets
+        const { data: budData, error: budError } = await supabase
+          .from('budgets')
+          .select('*')
+          .eq('user_id', user.id);
+        if (budError) throw budError;
+        setBudgets(budData);
+
       } catch (error) {
-        console.error('Error fetching expenses:', error.message);
+        console.error('Error fetching data:', error.message);
       } finally {
         setLoading(false);
       }
     };
-    if (user) fetchExpenses();
+    if (user) fetchData();
   }, [user]);
 
   // --- CREATE OR UPDATE DATA ---
@@ -120,6 +132,36 @@ export default function Dashboard() {
     setAiData(compressedDataForAI);
   };
 
+  // --- HANDLE BUDGETS ---
+  const handleSaveBudget = async (budgetData) => {
+    try {
+      // Check if a budget for this category already exists to update it instead of creating a duplicate
+      const existingBudget = budgets.find(b => b.category === budgetData.category);
+
+      if (existingBudget) {
+        const { data, error } = await supabase
+          .from('budgets')
+          .update({ amount: budgetData.amount })
+          .eq('id', existingBudget.id)
+          .select();
+        
+        if (error) throw error;
+        setBudgets(budgets.map(b => b.id === existingBudget.id ? data[0] : b));
+      } else {
+        const { data, error } = await supabase
+          .from('budgets')
+          .insert([{ ...budgetData, user_id: user.id }])
+          .select();
+          
+        if (error) throw error;
+        setBudgets([...budgets, data[0]]);
+      }
+      setIsBudgetModalOpen(false);
+    } catch (error) {
+      alert('Error saving budget: ' + error.message);
+    }
+  };
+
   // --- FILTER LOGIC ---
   const displayedExpenses = expenses.filter(exp => {
     let matchesMonth = true;
@@ -181,7 +223,17 @@ export default function Dashboard() {
         </div>
 
         <div className="action-buttons" style={{ display: 'flex', gap: '10px' }}>
-            {/* WEEK 13: New Smart Advisor Button */}
+            
+            {/* Navigates to the new Budgets page */}
+            <button 
+                className="secondary-btn" 
+                onClick={() => navigate('/budgets')}
+                style={{ backgroundColor: '#ecfdf5', color: '#10b981', border: '1px solid #6ee7b7', fontWeight: 'bold' }}
+            >
+                🎯 Manage Budgets
+            </button>
+
+            {/* Your existing Smart Advisor Button */}
             <button 
                 className="secondary-btn" 
                 onClick={handleRunSmartAdvisor}
@@ -190,6 +242,7 @@ export default function Dashboard() {
                 🤖 Ask Smart Advisor
             </button>
             
+            {/* Your existing Add Expense Button */}
             <button className="primary-btn" onClick={() => {
                 setEditingExpense(null);
                 setIsModalOpen(true);
@@ -265,6 +318,15 @@ export default function Dashboard() {
         onSave={handleSaveExpense} 
         expenseToEdit={editingExpense} 
       />
+
+      <SetBudgetModal
+        isOpen={isBudgetModalOpen}
+        onClose={() => setIsBudgetModalOpen(false)}
+        onSave={handleSaveBudget}
+      />
+      
     </div>
+
+    
   );
 }

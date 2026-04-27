@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Signup from './pages/Signup';
+import Budgets from './pages/Budgets';
 import './App.css';
 
 // Protected Route Component
@@ -28,6 +29,11 @@ function App() {
               </PrivateRoute>
             } 
           />
+          <Route path="/budgets" element={
+            <PrivateRoute>
+              <Budgets />
+            </PrivateRoute>
+          } />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
