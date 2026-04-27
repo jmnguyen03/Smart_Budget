@@ -1,11 +1,11 @@
-require('dotenv').config(); // Allows the server to read your .env file
+require('dotenv').config(); // Allows the server to read .env file
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors'); // Allows your React app to send requests here
 
 const app = express();
 
-// Enable CORS for your React frontend (assuming it runs on localhost:3000)
+// Enable CORS for React frontend (assuming it runs on localhost:3000)
 app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json()); // Allows server to read JSON bodies
 
