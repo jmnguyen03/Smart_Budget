@@ -4,7 +4,7 @@ export default function SetBudgetModal({ isOpen, onClose, onSave }) {
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState('Food & Dining');
 
-  // Removed 'Income' since you don't typically set a spending budget for income
+  // Removed 'Income' since don't typically set a spending budget for income
   const categories = [
     'Entertainment', 
     'Food & Dining', 
@@ -68,7 +68,7 @@ export default function SetBudgetModal({ isOpen, onClose, onSave }) {
   );
 }
 
-// Inline styles mirroring your AddExpenseModal
+// Inline styles mirroring AddExpenseModal
 const overlayStyle = {
   position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
   backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
