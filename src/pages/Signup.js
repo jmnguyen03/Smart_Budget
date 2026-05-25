@@ -35,6 +35,7 @@ export default function Signup() {
         email: formData.email,
         password: formData.password,
       });
+      console.log("Signup response:", { data, error }); // Add this line
 
       if (error) throw error;
 

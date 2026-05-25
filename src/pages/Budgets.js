@@ -26,7 +26,7 @@ export default function Budgets() {
         setBudgets(budData);
 
         // Fetch Expenses (needed to calculate progress)
-        // Let's grab just the current month's expenses for accurate tracking
+        // Grab just the current month's expenses for accurate tracking
         const date = new Date();
         const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).toISOString();
         

@@ -1,10 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-// Environment variables configured in Supabase
-const geminiApiKey = Deno.env.get('GEMINI_API_KEY')
-const supabaseUrl = Deno.env.get('SUPABASE_URL')
-const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
+const geminiApiKey = Deno.env.get('GEMINI_API_KEY')?.trim() 
+const supabaseUrl = Deno.env.get('SUPABASE_URL')?.trim()
+const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')?.trim()
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,7 +17,7 @@ serve(async (req) => {
   }
 
   try {
-    // 1. Security Verification: Initialize Supabase client with the user's Auth Header
+    // 1. Security Verification
     const authHeader = req.headers.get('Authorization')!
     const supabaseClient = createClient(
       supabaseUrl ?? '',
@@ -26,7 +25,7 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } }
     )
 
-    // Verify the user token is valid
+    // Verify the user token
     const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
     if (userError || !user) {
       return new Response(JSON.stringify({ error: 'Unauthorized. Invalid auth token.' }), {
@@ -35,11 +34,11 @@ serve(async (req) => {
       })
     }
 
-    // Parse the request payload
-    const { userPrompt, financialContext } = await req.json()
+    // Parse the request
+    const { message, context } = await req.json()
 
-    // 2. Edge Function Dev: Call the LLM (Gemini) securely
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`
+    // 2. Call the LLM (Gemini 1.5 Flash - Standard and Fast)
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`
     
     const geminiResponse = await fetch(geminiUrl, {
       method: 'POST',
@@ -51,12 +50,12 @@ serve(async (req) => {
           { 
             role: 'user', 
             parts: [{ 
-              text: `System Directive: You are Smart Advisor, a strict, data-driven financial coach for college students. Provide actionable, constraint-based advice. \n\nContext: ${JSON.stringify(financialContext)}\n\nUser Query: ${userPrompt}` 
+              text: `System Directive: You are Smart Advisor, a strict, data-driven financial coach for college students. Provide actionable, constraint-based advice. \n\nContext: ${JSON.stringify(context)}\n\nUser Query: ${message}` 
             }] 
           }
         ],
         generationConfig: {
-          maxOutputTokens: 250,
+          maxOutputTokens: 4000,
         }
       }),
     })
@@ -67,18 +66,19 @@ serve(async (req) => {
       throw new Error(llmData.error?.message || 'Failed to fetch from Gemini API')
     }
 
-    // Parse Gemini's specific response structure
+    // Parse the response
     const advisorText = llmData.candidates[0].content.parts[0].text;
 
-    // Return the LLM response to the client
+    // Return the response to React
     return new Response(
-      JSON.stringify({ advisorResponse: advisorText }),
+      JSON.stringify({ reply: advisorText }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     )
 
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }

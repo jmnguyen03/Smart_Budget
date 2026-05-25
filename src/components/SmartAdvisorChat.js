@@ -1,117 +1,102 @@
-import React, { useState } from 'react';
-import { supabase } from '../supabaseClient'; // Ensure this path is correct
+import React, { useState, useEffect, useRef } from 'react';
+import { supabase } from '../supabaseClient'; 
+import ReactMarkdown from 'react-markdown'; 
+import '../App.css'; 
 
+// REMOVED: isOpen and onClose since it lives on its own page now!
 const SmartAdvisorChat = ({ financialContext }) => {
   const [messages, setMessages] = useState([
-    {
-      role: 'advisor',
-      content: `Hello! Based on your recent spending, I've identified your persona as **${financialContext.persona || 'a Student'}**. How can I help you optimize your budget today?`
-    }
+    { sender: 'advisor', text: 'Hello! I am your Smart Advisor. How can I help you analyze your budget today?' }
   ]);
-  const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorToast, setErrorToast] = useState(null);
+  const [inputMessage, setInputMessage] = useState('');
+  const chatEndRef = useRef(null);
+
+  // Auto-scroll to the bottom when a new message is added
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!inputMessage.trim()) return;
 
-    const userMessage = input.trim();
-    
-    // 1. Update UI immediately with user's message
-    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
-    setInput('');
-    setIsLoading(true);
-    setErrorToast(null);
+    // 1. Add User Message to screen immediately
+    const userText = inputMessage;
+    setMessages(prev => [...prev, { sender: 'user', text: userText }]);
+    setInputMessage('');
+
+    // 2. Add temporary "Loading" bubble
+    setMessages(prev => [
+      ...prev, 
+      { sender: 'advisor', text: 'I am reviewing your spending patterns. Please wait a moment...', isTemporary: true }
+    ]);
 
     try {
-      // 2. Call the secure Supabase Edge Function
-      // Supabase automatically attaches the current user's Auth token for RLS!
+      // 3. ACTUAL BACKEND CALL: Send data to your Supabase Edge Function
       const { data, error } = await supabase.functions.invoke('smart-advisor', {
-        body: {
-          userPrompt: userMessage,
-          financialContext: financialContext // The ETL data that forces the constraint!
+        body: { 
+          message: userText, 
+          context: financialContext 
         }
       });
 
       if (error) throw error;
 
-      // 3. Update UI with AI's response
-      if (data && data.advisorResponse) {
-        setMessages((prev) => [...prev, { role: 'advisor', content: data.advisorResponse }]);
-      } else {
-        throw new Error("Received malformed data from AI.");
-      }
+      // 4. THE FIX: Explicitly grab data.reply to prevent the [object Object] bug!
+      const aiResponseText = data.reply || "Sorry, I could not generate a response.";
+
+      // 5. Remove the temporary loading bubble and add the REAL AI response
+      setMessages(prev => {
+        const filteredMessages = prev.filter(msg => !msg.isTemporary);
+        return [...filteredMessages, { sender: 'advisor', text: aiResponseText }];
+      });
 
     } catch (error) {
-      console.error("AI Chat Error:", error);
-      // Fallback UI for AI "Hallucinations" or API failures (Expert Review Requirement)
-      setErrorToast("Smart Advisor is currently unavailable or returned an error. Please try again.");
-    } finally {
-      setIsLoading(false);
+      console.error("AI API Error:", error);
+      // Handle Errors gracefully in the chat UI
+      setMessages(prev => {
+        const filteredMessages = prev.filter(msg => !msg.isTemporary);
+        return [...filteredMessages, { sender: 'advisor', text: "Sorry, I am having trouble connecting to the server right now. Please check your console." }];
+      });
     }
   };
 
   return (
-    <div className="chat-container" style={styles.container}>
-      <div className="chat-header" style={styles.header}>
-        <h3>🤖 Smart Advisor Chat</h3>
-        <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.8 }}>
-          Constraint Mode: Active ({financialContext.persona || 'Analyzing...'})
-        </p>
-      </div>
-
-      <div className="chat-window" style={styles.window}>
+    // Replaced the drawer class with a clean container class
+    <div className="smart-advisor-container" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      
+      <div className="advisor-chat-window" style={{ flexGrow: 1, overflowY: 'auto', padding: '20px' }}>
         {messages.map((msg, index) => (
-          <div key={index} style={msg.role === 'user' ? styles.userMsg : styles.advisorMsg}>
-            <strong>{msg.role === 'user' ? 'You' : 'Smart Advisor'}: </strong>
-            {msg.content}
+          <div key={index} className={`chat-bubble-container ${msg.sender}`}>
+            <div className={`chat-bubble ${msg.sender} ${msg.isTemporary ? 'pulsing' : ''}`}>
+              
+              {/* THE FIX: Render Markdown for AI, normal text for User/Loading */}
+              {msg.sender === 'advisor' && !msg.isTemporary ? (
+                <ReactMarkdown>{msg.text}</ReactMarkdown>
+              ) : (
+                msg.text
+              )}
+
+            </div>
           </div>
         ))}
-        
-        {/* Loading Skeleton / Typing Indicator (Expert Review Requirement) */}
-        {isLoading && (
-          <div style={styles.advisorMsg}>
-            <em>Smart Advisor is analyzing your data and typing...</em>
-          </div>
-        )}
+        <div ref={chatEndRef} />
       </div>
 
-      {/* Error Boundary / Fallback Toast */}
-      {errorToast && (
-        <div style={styles.errorToast}>
-          ⚠️ {errorToast}
-        </div>
-      )}
-
-      <form onSubmit={handleSendMessage} style={styles.form}>
+      <form className="advisor-input-form" onSubmit={handleSendMessage} style={{ padding: '20px', borderTop: '1px solid #e0e0e0', display: 'flex' }}>
         <input
           type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask a question about your budget..."
-          style={styles.input}
-          disabled={isLoading} // Prevent spam-clicking!
+          placeholder="Ask a financial question..."
+          value={inputMessage}
+          onChange={(e) => setInputMessage(e.target.value)}
+          style={{ flexGrow: 1, padding: '12px', borderRadius: '5px', border: '1px solid #ccc', marginRight: '10px' }}
         />
-        <button type="submit" style={styles.button} disabled={isLoading || !input.trim()}>
+        <button type="submit" style={{ padding: '12px 24px', backgroundColor: '#6b21a8', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>
           Send
         </button>
       </form>
     </div>
   );
-};
-
-// Basic inline styles to keep it clean (you can move these to App.css)
-const styles = {
-  container: { border: '1px solid #ccc', borderRadius: '8px', width: '100%', maxWidth: '500px', backgroundColor: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden' },
-  header: { backgroundColor: '#4F46E5', color: 'white', padding: '15px', textAlign: 'center' },
-  window: { padding: '15px', height: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px', backgroundColor: '#f9fafb' },
-  userMsg: { alignSelf: 'flex-end', backgroundColor: '#e0e7ff', padding: '10px', borderRadius: '8px', maxWidth: '80%' },
-  advisorMsg: { alignSelf: 'flex-start', backgroundColor: '#f3f4f6', padding: '10px', borderRadius: '8px', maxWidth: '80%', borderLeft: '4px solid #4F46E5' },
-  form: { display: 'flex', padding: '10px', borderTop: '1px solid #ccc', backgroundColor: '#fff' },
-  input: { flex: 1, padding: '10px', borderRadius: '4px', border: '1px solid #ccc', marginRight: '10px' },
-  button: { padding: '10px 20px', backgroundColor: '#4F46E5', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' },
-  errorToast: { backgroundColor: '#fee2e2', color: '#991b1b', padding: '10px', textAlign: 'center', fontSize: '0.9rem', borderTop: '1px solid #f87171' }
 };
 
 export default SmartAdvisorChat;

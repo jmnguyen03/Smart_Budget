@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Signup from './pages/Signup';
 import Budgets from './pages/Budgets';
+import SmartAdvisorPage from './pages/SmartAdvisorPage';
 import './App.css';
 
 // Protected Route Component
@@ -34,6 +35,7 @@ function App() {
               <Budgets />
             </PrivateRoute>
           } />
+          <Route path="/advisor" element={<SmartAdvisorPage />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
@@ -41,4 +43,3 @@ function App() {
 }
 
 export default App;
-

@@ -10,7 +10,6 @@ import SpendingPieChart from '../components/SpendingPieChart';
 import MonthlyBarChart from '../components/MonthlyBarChart';
 import PredictionWidget from '../components/PredictionWidget';
 import SetBudgetModal from '../components/SetBudgetModal';
-import SmartAdvisorChat from '../components/SmartAdvisorChat'; // Chat component imported
 
 // WEEK 13: Import the ETL Pipeline
 import { generateAIContext } from '../utils/etlPipeline';
@@ -28,9 +27,6 @@ export default function Dashboard() {
   // --- FILTER STATES ---
   const [filterMonth, setFilterMonth] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
-
-  // --- WEEK 13 AI STATE ---
-  const [aiData, setAiData] = useState(null);
 
   // --- READ DATA ---
   useEffect(() => {
@@ -101,7 +97,6 @@ export default function Dashboard() {
       
       setIsModalOpen(false);
       setEditingExpense(null);
-      setAiData(null); // Reset AI data if a new transaction changes their habits!
     } catch (error) {
       alert('Error saving transaction: ' + error.message);
     }
@@ -115,7 +110,6 @@ export default function Dashboard() {
       const { error } = await supabase.from('expenses').delete().eq('id', id);
       if (error) throw error;
       setExpenses(expenses.filter(exp => exp.id !== id));
-      setAiData(null); // Reset AI on delete
     } catch (error) {
       alert('Error deleting: ' + error.message);
     }
@@ -126,11 +120,12 @@ export default function Dashboard() {
     navigate('/login');
   };
 
-  // --- WEEK 13: RUN ETL SCRIPT ---
+  // --- WEEK 13: RUN ETL & NAVIGATE TO NEW ADVISOR PAGE ---
   const handleRunSmartAdvisor = () => {
     const compressedDataForAI = generateAIContext(expenses);
     console.log("🚀 Payload ready for AI API:", compressedDataForAI);
-    setAiData(compressedDataForAI);
+    // Navigate to the new page and pass the AI context along in the router state
+    navigate('/advisor', { state: { financialContext: compressedDataForAI } });
   };
 
   // --- HANDLE BUDGETS ---
@@ -224,25 +219,23 @@ export default function Dashboard() {
         </div>
 
         <div className="action-buttons" style={{ display: 'flex', gap: '10px' }}>
-            {/* Navigates to the new Budgets page */}
             <button 
                 className="secondary-btn" 
                 onClick={() => navigate('/budgets')}
                 style={{ backgroundColor: '#ecfdf5', color: '#10b981', border: '1px solid #6ee7b7', fontWeight: 'bold' }}
             >
-                🎯 Manage Budgets
+                Manage Budgets
             </button>
 
-            {/* Smart Advisor Button */}
+            {/* Now navigates to the dedicated Smart Advisor Page */}
             <button 
-                className="secondary-btn" 
+                className="secondary-btn advisor-link-btn" 
                 onClick={handleRunSmartAdvisor}
                 style={{ backgroundColor: '#f3e8ff', color: '#6b21a8', border: '1px solid #d8b4fe', fontWeight: 'bold' }}
             >
-                🤖 Ask Smart Advisor
+                Talk to Smart Advisor
             </button>
             
-            {/* Add Expense Button */}
             <button className="primary-btn" onClick={() => {
                 setEditingExpense(null);
                 setIsModalOpen(true);
@@ -251,31 +244,6 @@ export default function Dashboard() {
             </button>
         </div>
       </div>
-
-      {/* WEEK 14: Integrates SmartAdvisorChat when aiData is present */}
-      {aiData && (
-        <div style={{ margin: '0 20px 20px 20px', padding: '20px', backgroundColor: '#f0fdfa', border: '1px solid #5eead4', borderRadius: '8px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
-                <div>
-                    <h3 style={{ margin: '0 0 5px 0', color: '#0f766e' }}>✨ Smart Advisor Session</h3>
-                    <p style={{ margin: 0, color: '#115e59', fontSize: '0.95rem' }}>
-                        Your data has been compressed. Constraint persona active.
-                    </p>
-                </div>
-                <button 
-                  onClick={() => setAiData(null)} 
-                  style={{ padding: '5px 10px', borderRadius: '4px', border: '1px solid #99f6e4', backgroundColor: 'white', cursor: 'pointer', color: '#0f766e' }}
-                >
-                  Close Chat ✕
-                </button>
-            </div>
-
-            {/* Render the Chat Component right below the header */}
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <SmartAdvisorChat financialContext={aiData} />
-            </div>
-        </div>
-      )}
 
       {/* 3. Main Split Layout */}
       <div className="content-split">

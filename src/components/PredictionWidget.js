@@ -22,7 +22,7 @@ export default function PredictionWidget({ expenses }) {
     const thisMonthExpenses = expenses.filter(exp => {
       const [year, month] = exp.date.split('-').map(Number);
       const isCurrentMonth = (month - 1) === currentMonth && year === currentYear;
-      const isExpense = exp.category !== 'Income' && Number(exp.amount) < 0; // NEW FIX
+      const isExpense = exp.category !== 'Income' && Number(exp.amount) < 0; 
       
       return isCurrentMonth && isExpense;
     });
@@ -66,22 +66,28 @@ export default function PredictionWidget({ expenses }) {
     const totalSpentSoFar = thisMonthExpenses.reduce((acc, curr) => acc + Math.abs(Number(curr.amount)), 0);
     setCurrentTotal(totalSpentSoFar);
     
+    // Calculate local variables for synchronous math
+    const localBurnRate = runningRecurringTotal / (currentDay || 1);
+    const remainingDays = daysInMonth - currentDay;
+    
     // Burn rate strictly ignores one-time spikes to show the true daily habit
-    setBurnRate(runningRecurringTotal / (currentDay || 1));
+    setBurnRate(localBurnRate);
 
-    // 4. Predictive Algorithm
+    // 4. Predictive Algorithm with Failsafe
     if (regressionData.length > 1) {
       const result = regression.linear(regressionData);
       const predictedRecurring = result.predict(daysInMonth)[1]; 
       
+      // THE FIX: If the regression model flattens out, fall back to the average burn rate for the remaining days.
       const safePredictedRecurring = predictedRecurring > runningRecurringTotal 
         ? predictedRecurring 
-        : runningRecurringTotal;
+        : runningRecurringTotal + (localBurnRate * remainingDays);
 
       // FINAL MATH: Habitual prediction + Flat one-time spikes
       setProjectedTotal(safePredictedRecurring + oneTimeTotal);
     } else {
-      setProjectedTotal(totalSpentSoFar);
+      // If there isn't enough data for regression, just use the burn rate
+      setProjectedTotal(totalSpentSoFar + (localBurnRate * remainingDays));
     }
 
   }, [expenses]);
